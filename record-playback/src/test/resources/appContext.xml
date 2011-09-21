@@ -9,14 +9,23 @@
   <bean id="simpleApi"
         class="com.thoughtworks.recordplayback.testservice.SimpleApiImpl"/>
 
+  <bean id="invoiceService"
+        class="com.thoughtworks.recordplayback.invoiceapi.InvoiceServiceImpl"/>
+
   <bean id="recordPlaybackInterceptor"
         class="com.thoughtworks.recordplayback.RecordPlaybackInterceptor" />
 
   <aop:config>
-      <aop:aspect id="recordPlaybackAspect" ref="recordPlaybackInterceptor">
-        <aop:pointcut id="recordPlaybackPointcut"
+      <aop:aspect id="simpleApiAspect" ref="recordPlaybackInterceptor">
+        <aop:pointcut id="simpleApiPointcut"
              expression="execution(* com.thoughtworks.recordplayback.testservice.SimpleApi.*(..))"/>
-        <aop:around pointcut-ref="recordPlaybackPointcut" method="invoke"/>
+        <aop:around pointcut-ref="simpleApiPointcut" method="invoke"/>
+      </aop:aspect>
+
+      <aop:aspect id="invoiceApiAspect" ref="recordPlaybackInterceptor">
+        <aop:pointcut id="invoiceApiPointcut"
+             expression="execution(* com.thoughtworks.recordplayback.invoiceapi.InvoiceService.*(..))"/>
+        <aop:around pointcut-ref="invoiceApiPointcut" method="invoke"/>
       </aop:aspect>
   </aop:config>
 

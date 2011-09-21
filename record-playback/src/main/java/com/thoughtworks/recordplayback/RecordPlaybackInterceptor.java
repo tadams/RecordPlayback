@@ -1,5 +1,6 @@
 package com.thoughtworks.recordplayback;
 
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 
 public class RecordPlaybackInterceptor {
@@ -13,16 +14,17 @@ public class RecordPlaybackInterceptor {
     public Object invoke(ProceedingJoinPoint joinPoint) throws Throwable {
 
         Object response;
+        String joinPointId = createMethodId(joinPoint);
 
         switch (recordPlaybackConfig.getRunMode()) {
 
             case RECORD:
                 response = joinPoint.proceed();
-                recordHandler.recordAPI(joinPoint.getArgs(), response);
+                recordHandler.recordAPI(joinPointId, joinPoint.getArgs(), response);
                 return response;
 
             case PLAYBACK:
-                response = playbackHandler.getRecordedResponse(joinPoint.getArgs());
+                response = playbackHandler.getRecordedResponse(joinPointId, joinPoint.getArgs());
                 return response;
 
         }
@@ -38,6 +40,11 @@ public class RecordPlaybackInterceptor {
         if (recordPlaybackConfig.getRunMode() == RunMode.RECORD && newConfig.getRunMode() != RunMode.RECORD) {
             recordHandler.endRecord();
         }
+    }
+
+    private String createMethodId(JoinPoint joinPoint) {
+        return joinPoint.getSignature().getDeclaringTypeName() + ":" +
+               joinPoint.getSignature().getName();
     }
 
     public void setPlaybackHandler(PlaybackHandler playbackHandler) {
