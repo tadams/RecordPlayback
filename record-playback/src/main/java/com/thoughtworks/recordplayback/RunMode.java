@@ -1,3 +1,3 @@
 package com.thoughtworks.recordplayback;
 
-public enum RunMode { OFF, RECORD, PLAYBACK }
+public enum RunMode { OFF, RECORD, PLAYBACK, DEBUG }

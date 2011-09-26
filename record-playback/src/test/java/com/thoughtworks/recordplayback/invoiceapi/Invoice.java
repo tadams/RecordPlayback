@@ -2,11 +2,12 @@ package com.thoughtworks.recordplayback.invoiceapi;
 
 import org.apache.commons.lang.ObjectUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
-public class Invoice {
+public class Invoice implements Serializable {
 
     private Date invoiceDate;
     private Integer numberOfProducts;
@@ -19,6 +20,10 @@ public class Invoice {
         for (Product product : products) {
             invoiceTotalDollars = invoiceTotalDollars.add(product.getPriceDollars());
         }
+    }
+
+    public void setInvoiceDate(Date invoiceDate) {
+        this.invoiceDate = invoiceDate;
     }
 
     public Date getInvoiceDate() {

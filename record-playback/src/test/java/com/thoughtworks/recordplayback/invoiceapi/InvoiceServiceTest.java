@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "/appContext.xml")
@@ -25,31 +26,37 @@ public class InvoiceServiceTest {
 
     private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls();
 
-    private RecordPlaybackConfig config = new RecordPlaybackConfig();
-
     @Before
     public void given() {
-        interceptor.setRecordPlaybackConfig(config);
         interceptor.setRecordHandler(simpleRecordPlaybackImpls);
         interceptor.setPlaybackHandler(simpleRecordPlaybackImpls);
 
         Map<String, RequestNormalizer> requestNormalizerMap = new HashMap<String, RequestNormalizer>();
         requestNormalizerMap.put("com.thoughtworks.recordplayback.invoiceapi.InvoiceService:buildInvoice",
-                                 new InvoiceServiceRequestNormalizer());
-        simpleRecordPlaybackImpls.setRequestNormalizer(requestNormalizerMap);
+                new InvoiceServiceRequestNormalizer());
+        interceptor.setRequestNormalizer(requestNormalizerMap);
+
+        Map<String, ResponseModifier> responseModifierMap = new HashMap<String, ResponseModifier>();
+        responseModifierMap.put("com.thoughtworks.recordplayback.invoiceapi.InvoiceService:buildInvoice",
+                new InvoiceServiceResponseModifier());
+        interceptor.setResponseModifier(responseModifierMap);
     }
 
     @Test
     public void shouldRecordAndPlayback1API() {
-        config.setRunMode(RunMode.RECORD);
+        interceptor.setRunMode(RunMode.RECORD);
 
         Order order = new Order(123, new Date(), getProductList());
         Invoice invoice1 = invoiceService.buildInvoice("123", order);
 
-        config.setRunMode(RunMode.PLAYBACK);
+        interceptor.setRunMode(RunMode.PLAYBACK);
 
         Invoice invoice2 = invoiceService.buildInvoice("321", order);
-        assertEquals(invoice1, invoice2);
+        // Invoice date was modified
+        assertFalse(invoice1.equals(invoice2));
+
+        assertEquals(invoice1.getInvoiceTotalDollars(), invoice2.getInvoiceTotalDollars());
+        assertEquals(invoice1.getNumberOfProducts(), invoice2.getNumberOfProducts());
     }
 
     private List<Product> getProductList() {

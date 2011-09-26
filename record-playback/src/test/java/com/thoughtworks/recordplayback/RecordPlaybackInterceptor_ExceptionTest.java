@@ -9,12 +9,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "/appContext.xml")
-public class RecordPlaybackInterceptor_SimpleTest {
+public class RecordPlaybackInterceptor_ExceptionTest {
 
     @Autowired
     private SimpleApi simpleApi;
@@ -31,30 +31,31 @@ public class RecordPlaybackInterceptor_SimpleTest {
     }
 
     @Test
-    public void shouldRecordAndPlayback1API() {
+    public void shouldRecordAndPlaybackRecordedException() {
         interceptor.setRunMode(RunMode.RECORD);
 
-        String[] recordResponse = invoke(3);
-        assertFalse(recordResponse[0].equals(recordResponse[1]));
-        assertFalse(recordResponse[1].equals(recordResponse[2]));
+        RuntimeException rte1 = null;
+        RuntimeException rte2 = null;
+
+        try {
+            simpleApi.getResult(0, "Exception");
+            fail();
+        } catch(RuntimeException rte) {
+            rte1 = rte;
+        }
 
         interceptor.setRunMode(RunMode.PLAYBACK);
 
-        String[] playbackResponse = invoke(3);
-        assertEquals(recordResponse[0], playbackResponse[0]);
-        assertEquals(recordResponse[1], playbackResponse[1]);
-        assertEquals(recordResponse[2], playbackResponse[2]);
-    }
-
-    private String[] invoke(int timesToInvoke) {
-        String[] responses = new String[timesToInvoke];
-        for (int i = 0; i < timesToInvoke; i++) {
-            responses[i] = simpleApi.getResult(1000, "Foo" + i);
+        try {
+            simpleApi.getResult(0, "Exception");
+            fail();
+        } catch(RuntimeException rte) {
+            rte2 = rte;
         }
-        return responses;
+
+        assertEquals(rte1.getClass().getName() + rte1.getMessage(),
+                     rte2.getClass().getName() + rte2.getMessage());
+
     }
-
-
-
 
 }

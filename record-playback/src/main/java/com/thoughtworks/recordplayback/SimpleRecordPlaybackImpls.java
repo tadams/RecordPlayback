@@ -1,5 +1,6 @@
 package com.thoughtworks.recordplayback;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -7,33 +8,60 @@ import java.util.Map;
 
 public class SimpleRecordPlaybackImpls implements RecordHandler, PlaybackHandler {
 
-    private Map<List, Object>       apiCache = new HashMap<List, Object>();
-    private Map<String, RequestNormalizer> normalizerMap = new HashMap<String, RequestNormalizer>();
+    String API_CACHE_FILE_NAME = "/tmp/recordPlayback.ser";
 
+    //TODO: Expand to contain a map of maps based on the JoinPointId
+    private Map<List, RecordedResponse>       apiCache = new HashMap<List, RecordedResponse>();
 
-    public Object getRecordedResponse(String joinPointId, Object[] arguments) {
-        arguments = normalizeRequest(joinPointId, arguments);
+    public RecordedResponse getRecordedResponse(String joinPointId, Object[] arguments) {
+
+        if (apiCache.isEmpty()) {
+            loadApiCache();
+        }
+
         return apiCache.get(Arrays.asList(arguments));
     }
 
-    public void recordAPI(String joinPointId, Object[] arguments, Object response) {
-        arguments = normalizeRequest(joinPointId, arguments);
-        apiCache.put(Arrays.asList(arguments), response);
-    }
+    public void recordAPI(String joinPointId, Object[] arguments, Object response, Throwable thrown) {
 
-    private Object[] normalizeRequest(String joinPointId, Object[] arguments) {
-        RequestNormalizer requestNormalizer = normalizerMap.get(joinPointId);
-        if (requestNormalizer != null) {
-            return requestNormalizer.normalize(joinPointId, arguments);
+        RecordedResponse recordedResponse = null;
+
+        if (thrown == null) {
+            recordedResponse = new RecordedResponse(response);
+        } else {
+            recordedResponse = new RecordedResponse(thrown);
         }
-        return arguments;
+
+        apiCache.put(Arrays.asList(arguments), recordedResponse);
     }
 
     public void endRecord() {
-        // better impl might persist the apiCache
+        persistApiCache();
+        apiCache.clear();
     }
 
-    public void setRequestNormalizer(Map<String, RequestNormalizer> normalizerMap) {
-        this.normalizerMap = normalizerMap;
+    //TODO: Support named directory/file - Spring driven?
+    private void persistApiCache() {
+
+        try {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(API_CACHE_FILE_NAME));
+            objectOutputStream.writeObject(apiCache);
+            objectOutputStream.close();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void loadApiCache() {
+
+        try {
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(API_CACHE_FILE_NAME));
+            apiCache = (Map<List, RecordedResponse>)objectInputStream.readObject();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        } catch(ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

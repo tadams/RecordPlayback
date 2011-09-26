@@ -2,10 +2,11 @@ package com.thoughtworks.recordplayback.invoiceapi;
 
 import org.apache.commons.lang.ObjectUtils;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class Order {
+public class Order implements Serializable {
 
     private Integer orderId;
     private Date    orderTimeStamp;

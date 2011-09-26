@@ -3,41 +3,89 @@ package com.thoughtworks.recordplayback;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RecordPlaybackInterceptor {
 
-    private RecordPlaybackConfig recordPlaybackConfig = RecordPlaybackConfig.EMPTY_CONFIG;
+    private RunMode mode = RunMode.OFF;
 
     private RecordHandler   recordHandler;
 
     private PlaybackHandler playbackHandler;
 
+    private Map<String, RequestNormalizer> normalizerMap = new HashMap<String, RequestNormalizer>();
+    private Map<String, ResponseModifier>  modifierMap   = new HashMap<String, ResponseModifier>();
+
     public Object invoke(ProceedingJoinPoint joinPoint) throws Throwable {
 
-        Object response;
-        String joinPointId = createMethodId(joinPoint);
+        Object response = null;
 
-        switch (recordPlaybackConfig.getRunMode()) {
+        switch (mode) {
+
+            case DEBUG:
+                response = doDebug(joinPoint);
+                return response;
 
             case RECORD:
-                response = joinPoint.proceed();
-                recordHandler.recordAPI(joinPointId, joinPoint.getArgs(), response);
+                response = doRecord(joinPoint);
                 return response;
 
             case PLAYBACK:
-                response = playbackHandler.getRecordedResponse(joinPointId, joinPoint.getArgs());
-                return response;
-
+                response = doPlayback(joinPoint);
+                if (response != null) {
+                    return response;
+                }
         }
 
         return joinPoint.proceed();
     }
 
-    public void setRecordPlaybackConfig(RecordPlaybackConfig recordPlaybackConfig) {
-        this.recordPlaybackConfig = recordPlaybackConfig;
+    private Object doRecord(ProceedingJoinPoint joinPoint) throws Throwable{
+        String joinPointId = createMethodId(joinPoint);
+        Object[] normalizedArguments = normalizeRequest(joinPointId, joinPoint.getArgs());
+
+        try {
+            Object response = joinPoint.proceed();
+            recordHandler.recordAPI(joinPointId, normalizedArguments, response, null);
+            return response;
+
+        } catch (Throwable thrown) {
+            recordHandler.recordAPI(joinPointId, normalizedArguments, null, thrown);
+            throw thrown;
+        }
     }
 
-    private void handleConfigChange(RecordPlaybackConfig newConfig) {
-        if (recordPlaybackConfig.getRunMode() == RunMode.RECORD && newConfig.getRunMode() != RunMode.RECORD) {
+    //TODO: Handle condition when there is no RecordedResponse for Request
+    private Object doPlayback(ProceedingJoinPoint joinPoint) throws Throwable {
+        String joinPointId = createMethodId(joinPoint);
+        Object[] normalizedArguments = normalizeRequest(joinPointId, joinPoint.getArgs());
+
+        RecordedResponse recordedResponse = playbackHandler.getRecordedResponse(joinPointId, normalizedArguments);
+
+        if (recordedResponse.isException()) {
+            throw recordedResponse.getException();
+        }
+
+        return modifyResponse(joinPointId, recordedResponse, joinPoint.getArgs());
+    }
+
+    private Object doDebug(ProceedingJoinPoint joinPoint) throws Throwable {
+        Object response = doPlayback(joinPoint);
+        if (response != null) {
+            return response;
+        }
+
+        return doRecord(joinPoint);
+    }
+
+    public void setRunMode(RunMode newMode) {
+        handleConfigChange(newMode);
+        this.mode = newMode;
+    }
+
+    private void handleConfigChange(RunMode newMode) {
+        if (mode == RunMode.RECORD && newMode != RunMode.RECORD) {
             recordHandler.endRecord();
         }
     }
@@ -47,12 +95,41 @@ public class RecordPlaybackInterceptor {
                joinPoint.getSignature().getName();
     }
 
+    private Object[] normalizeRequest(String joinPointId, Object[] arguments) {
+        RequestNormalizer requestNormalizer = normalizerMap.get(joinPointId);
+        if (requestNormalizer != null) {
+            return requestNormalizer.normalize(joinPointId, arguments);
+        }
+        return arguments;
+    }
+
+    private Object modifyResponse(String joinPointId, RecordedResponse recordedResponse, Object[] originalArguments) {
+
+        if (recordedResponse == null) {
+            return null;
+        }
+
+        ResponseModifier responseModifier = modifierMap.get(joinPointId);
+        if (responseModifier != null) {
+            return responseModifier.modify(joinPointId, recordedResponse, originalArguments);
+        }
+        return recordedResponse.getResponse();
+    }
+
     public void setPlaybackHandler(PlaybackHandler playbackHandler) {
         this.playbackHandler = playbackHandler;
     }
 
     public void setRecordHandler(RecordHandler recordHandler) {
         this.recordHandler = recordHandler;
+    }
+
+    public void setRequestNormalizer(Map<String, RequestNormalizer> normalizerMap) {
+        this.normalizerMap = normalizerMap;
+    }
+
+    public void setResponseModifier(Map<String, ResponseModifier> modifierMap) {
+        this.modifierMap = modifierMap;
     }
 
 }

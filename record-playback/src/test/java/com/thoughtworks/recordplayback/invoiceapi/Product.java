@@ -2,10 +2,11 @@ package com.thoughtworks.recordplayback.invoiceapi;
 
 import org.apache.commons.lang.ObjectUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class Product {
+public class Product implements Serializable {
 
     private String      productName;
     private Integer     inventoryCount;
