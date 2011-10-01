@@ -12,9 +12,6 @@
   <bean id="invoiceService"
         class="com.thoughtworks.recordplayback.invoiceapi.InvoiceServiceImpl"/>
 
-  <bean id="pricingService"
-        class="com.thoughtworks.recordplayback.priceapi.PricingServiceImpl"/>
-
   <bean id="recordPlaybackInterceptor"
         class="com.thoughtworks.recordplayback.RecordPlaybackInterceptor" />
 
@@ -29,12 +26,6 @@
         <aop:pointcut id="invoiceApiPointcut"
              expression="execution(* com.thoughtworks.recordplayback.invoiceapi.InvoiceService.*(..))"/>
         <aop:around pointcut-ref="invoiceApiPointcut" method="invoke"/>
-      </aop:aspect>
-
-      <aop:aspect id="PricingApiAspect" ref="recordPlaybackInterceptor">
-        <aop:pointcut id="pricingApiPointcut"
-             expression="execution(* com.thoughtworks.recordplayback.priceapi.PricingService.*(..))"/>
-        <aop:around pointcut-ref="pricingApiPointcut" method="invoke"/>
       </aop:aspect>
   </aop:config>
 
