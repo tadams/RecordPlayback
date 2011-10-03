@@ -9,8 +9,8 @@ public class RecordedResponse implements Serializable {
     private Object      response;
     private Throwable   thrown;
 
-    public RecordedResponse(Throwable thown) {
-        this.thrown     = thown;
+    public RecordedResponse(Throwable thrown) {
+        this.thrown     = thrown;
         this.timeStamp  = new Date();
     }
 
