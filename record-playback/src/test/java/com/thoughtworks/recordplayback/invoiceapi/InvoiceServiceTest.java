@@ -24,7 +24,9 @@ public class InvoiceServiceTest {
     @Autowired
     private RecordPlaybackInterceptor interceptor;
 
-    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls();
+    private Cache cache = new Cache();
+
+    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls(cache);
 
     @Before
     public void given() {

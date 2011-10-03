@@ -1,9 +1,6 @@
 package com.thoughtworks.recordplayback.priceapi;
 
-import com.thoughtworks.recordplayback.RecordPlaybackInterceptor;
-import com.thoughtworks.recordplayback.RequestNormalizer;
-import com.thoughtworks.recordplayback.RunMode;
-import com.thoughtworks.recordplayback.SimpleRecordPlaybackImpls;
+import com.thoughtworks.recordplayback.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +24,9 @@ public class PriceServiceTest {
     @Autowired
     private RecordPlaybackInterceptor interceptor;
 
-    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls();
+    private Cache cache = new Cache();
+
+    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls(cache);
 
 
     @Before

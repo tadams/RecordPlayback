@@ -1,25 +1,16 @@
 package com.thoughtworks.recordplayback;
 
-import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class SimpleRecordPlaybackImpls implements RecordHandler, PlaybackHandler {
 
-    String API_CACHE_FILE_NAME = "/tmp/recordPlayback.ser";
+    private Cache cache;
 
-    //TODO: Expand to contain a map of maps based on the JoinPointId
-    private Map<List, RecordedResponse>       apiCache = new HashMap<List, RecordedResponse>();
+
+    public SimpleRecordPlaybackImpls(Cache cache) {
+        this.cache = cache;
+    }
 
     public RecordedResponse getRecordedResponse(String joinPointId, Object[] arguments) {
-
-        if (apiCache.isEmpty()) {
-            loadApiCache();
-        }
-
-        return apiCache.get(Arrays.asList(arguments));
+        return cache.get(arguments);
     }
 
     public void recordAPI(String joinPointId, Object[] arguments, Object response, Throwable thrown) {
@@ -32,36 +23,12 @@ public class SimpleRecordPlaybackImpls implements RecordHandler, PlaybackHandler
             recordedResponse = new RecordedResponse(thrown);
         }
 
-        apiCache.put(Arrays.asList(arguments), recordedResponse);
+        cache.save(arguments, recordedResponse);
     }
 
     public void endRecord() {
-        persistApiCache();
-        apiCache.clear();
+        cache.saveAsFile();
+        cache.clear();
     }
 
-    //TODO: Support named directory/file - Spring driven?
-    private void persistApiCache() {
-
-        try {
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(API_CACHE_FILE_NAME));
-            objectOutputStream.writeObject(apiCache);
-            objectOutputStream.close();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    private void loadApiCache() {
-
-        try {
-            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(API_CACHE_FILE_NAME));
-            apiCache = (Map<List, RecordedResponse>)objectInputStream.readObject();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        } catch(ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
