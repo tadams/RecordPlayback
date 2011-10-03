@@ -6,6 +6,8 @@ target/
 # IDE Stuff #
 #############
 .idea/
+*.ipr
+*.iws
 *.iml
 
 # Packages #
