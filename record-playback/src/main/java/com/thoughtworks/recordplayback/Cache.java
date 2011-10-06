@@ -17,7 +17,7 @@ public class Cache {
     public RecordedResponse get(Object[] arguments) {
 
         if (apiCache.isEmpty()) {
-            loadApiCache();
+            apiCache = initApiCache();
         }
         return apiCache.get(Arrays.asList(arguments));
     }
@@ -41,11 +41,17 @@ public class Cache {
         apiCache.clear();
     }
 
-    private void loadApiCache() {
+    private Map<List, RecordedResponse> initApiCache() {
 
         try {
-            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(API_CACHE_FILE_NAME));
-            apiCache = (Map<List, RecordedResponse>) objectInputStream.readObject();
+
+            File apiFile = new File(API_CACHE_FILE_NAME);
+            if (apiFile.isFile() == false) {
+                return new HashMap<List, RecordedResponse>();
+            }
+
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(apiFile));
+            return (Map<List, RecordedResponse>) objectInputStream.readObject();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {

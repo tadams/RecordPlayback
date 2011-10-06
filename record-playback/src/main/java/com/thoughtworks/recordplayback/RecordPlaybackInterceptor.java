@@ -63,6 +63,10 @@ public class RecordPlaybackInterceptor {
 
         RecordedResponse recordedResponse = playbackHandler.getRecordedResponse(joinPointId, normalizedArguments);
 
+        if (recordedResponse == null && mode.isDebug()) {
+            return null;
+        }
+
         if (recordedResponse.isException()) {
             throw recordedResponse.getException();
         }
