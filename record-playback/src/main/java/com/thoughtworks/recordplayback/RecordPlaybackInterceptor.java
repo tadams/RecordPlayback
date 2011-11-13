@@ -41,17 +41,18 @@ public class RecordPlaybackInterceptor {
         return joinPoint.proceed();
     }
 
-    private Object doRecord(ProceedingJoinPoint joinPoint) throws Throwable{
+    private Object doRecord(ProceedingJoinPoint joinPoint) throws Throwable {
+
         String joinPointId = createMethodId(joinPoint);
-        Object[] normalizedArguments = normalizeRequest(joinPointId, joinPoint.getArgs());
+        RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
 
         try {
             Object response = joinPoint.proceed();
-            recordHandler.recordAPI(joinPointId, normalizedArguments, response, null);
+            recordHandler.recordAPI(joinPointId, request, response, null);
             return response;
 
         } catch (Throwable thrown) {
-            recordHandler.recordAPI(joinPointId, normalizedArguments, null, thrown);
+            recordHandler.recordAPI(joinPointId, request, null, thrown);
             throw thrown;
         }
     }
@@ -59,9 +60,9 @@ public class RecordPlaybackInterceptor {
     //TODO: Handle condition when there is no RecordedResponse for Request
     private Object doPlayback(ProceedingJoinPoint joinPoint) throws Throwable {
         String joinPointId = createMethodId(joinPoint);
-        Object[] normalizedArguments = normalizeRequest(joinPointId, joinPoint.getArgs());
+        RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
 
-        RecordedResponse recordedResponse = playbackHandler.getRecordedResponse(joinPointId, normalizedArguments);
+        RecordedResponse recordedResponse = playbackHandler.getRecordedResponse(joinPointId, request);
 
         if (recordedResponse == null && mode.isDebug()) {
             return null;
@@ -99,12 +100,12 @@ public class RecordPlaybackInterceptor {
                joinPoint.getSignature().getName();
     }
 
-    private Object[] normalizeRequest(String joinPointId, Object[] arguments) {
+    private RequestWrapper normalizeRequest(String joinPointId, Object[] arguments) {
         RequestNormalizer requestNormalizer = normalizerMap.get(joinPointId);
         if (requestNormalizer != null) {
-            return requestNormalizer.normalize(joinPointId, arguments);
+            arguments = requestNormalizer.normalize(joinPointId, arguments);
         }
-        return arguments;
+        return new RequestWrapper(arguments);
     }
 
     private Object modifyResponse(String joinPointId, RecordedResponse recordedResponse, Object[] originalArguments) {

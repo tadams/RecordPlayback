@@ -2,7 +2,7 @@ package com.thoughtworks.recordplayback;
 
 public interface RecordHandler {
 
-    public void recordAPI(String joinPointId, Object[] arguments, Object response, Throwable thrown);
+    public void recordAPI(String joinPointId, RequestWrapper request, Object response, Throwable thrown);
 
     public void endRecord();
 

@@ -9,11 +9,11 @@ public class SimpleRecordPlaybackImpls implements RecordHandler, PlaybackHandler
         this.cache = cache;
     }
 
-    public RecordedResponse getRecordedResponse(String joinPointId, Object[] arguments) {
-        return cache.get(arguments);
+    public RecordedResponse getRecordedResponse(String joinPointId, RequestWrapper request) {
+        return cache.get(request);
     }
 
-    public void recordAPI(String joinPointId, Object[] arguments, Object response, Throwable thrown) {
+    public void recordAPI(String joinPointId, RequestWrapper request, Object response, Throwable thrown) {
 
         RecordedResponse recordedResponse = null;
 
@@ -23,7 +23,7 @@ public class SimpleRecordPlaybackImpls implements RecordHandler, PlaybackHandler
             recordedResponse = new RecordedResponse(thrown);
         }
 
-        cache.save(arguments, recordedResponse);
+        cache.save(request, recordedResponse);
     }
 
     public void endRecord() {

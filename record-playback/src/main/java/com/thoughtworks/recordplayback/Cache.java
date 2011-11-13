@@ -2,28 +2,26 @@ package com.thoughtworks.recordplayback;
 
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Cache {
 
     String API_CACHE_FILE_NAME = "/tmp/recordPlayback.ser";
     //TODO: Expand to contain a map of maps based on the JoinPointId
-    private Map<List, RecordedResponse> apiCache = new HashMap<List, RecordedResponse>();
+    private Map<RequestWrapper, RecordedResponse> apiCache = new HashMap<RequestWrapper, RecordedResponse>();
 
 
-    public RecordedResponse get(Object[] arguments) {
+    public RecordedResponse get(RequestWrapper request) {
 
         if (apiCache.isEmpty()) {
             apiCache = initApiCache();
         }
-        return apiCache.get(Arrays.asList(arguments));
+        return apiCache.get(request);
     }
 
-    public void save(Object[] arguments, RecordedResponse recordedResponse) {
-        apiCache.put(Arrays.asList(arguments), recordedResponse);
+    public void save(RequestWrapper request, RecordedResponse recordedResponse) {
+        apiCache.put(request, recordedResponse);
     }
 
     //TODO: Support named directory/file - Spring driven?
@@ -41,17 +39,17 @@ public class Cache {
         apiCache.clear();
     }
 
-    private Map<List, RecordedResponse> initApiCache() {
+    private Map<RequestWrapper, RecordedResponse> initApiCache() {
 
         try {
 
             File apiFile = new File(API_CACHE_FILE_NAME);
             if (apiFile.isFile() == false) {
-                return new HashMap<List, RecordedResponse>();
+                return new HashMap<RequestWrapper, RecordedResponse>();
             }
 
             ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(apiFile));
-            return (Map<List, RecordedResponse>) objectInputStream.readObject();
+            return (Map<RequestWrapper, RecordedResponse>) objectInputStream.readObject();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {

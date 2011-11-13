@@ -14,7 +14,7 @@ import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "/appContext.xml")
-public class RecordPlaybackInterceptor_DemoModeTest {
+public class RecordPlaybackInterceptor_DebugModeTest {
 
     @Autowired
     private SimpleApi simpleApi;
