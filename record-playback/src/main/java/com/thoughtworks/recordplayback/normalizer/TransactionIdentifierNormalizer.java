@@ -1,4 +1,4 @@
-package com.thoughtworks.recordplayback.Normalizer;
+package com.thoughtworks.recordplayback.normalizer;
 
 import com.thoughtworks.recordplayback.RequestNormalizer;
 

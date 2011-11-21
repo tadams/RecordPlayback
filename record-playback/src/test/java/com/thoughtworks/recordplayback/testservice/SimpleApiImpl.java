@@ -14,4 +14,12 @@ public class SimpleApiImpl implements SimpleApi {
 
         return string + randomGenerator.nextInt(integer);
     }
+
+    public String getResultWithLatency(Integer integer, String string, Integer latency) {
+        try {
+            Thread.sleep(latency);
+        } catch (InterruptedException ignore) {
+        }
+        return getResult(integer, string);
+    }
 }

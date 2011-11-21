@@ -8,14 +8,17 @@ public class RecordedResponse implements Serializable {
     private Date        timeStamp;
     private Object      response;
     private Throwable   thrown;
+    private Long        responseLatencyMilliseconds;
 
-    public RecordedResponse(Throwable thrown) {
+    public RecordedResponse(Throwable thrown, Long responseLatencyMilliseconds) {
         this.thrown     = thrown;
+        this.responseLatencyMilliseconds = responseLatencyMilliseconds;
         this.timeStamp  = new Date();
     }
 
-    public RecordedResponse(Object response) {
+    public RecordedResponse(Object response, Long responseLatencyMilliseconds) {
         this.response   = response;
+        this.responseLatencyMilliseconds = responseLatencyMilliseconds;
         this.timeStamp  = new Date();
     }
 
@@ -33,5 +36,13 @@ public class RecordedResponse implements Serializable {
 
     public Throwable getException() {
         return thrown;
+    }
+
+    public boolean hasLatency() {
+        return responseLatencyMilliseconds > 0;
+    }
+
+    public Long getLatencyMilliseconds() {
+        return responseLatencyMilliseconds;
     }
 }

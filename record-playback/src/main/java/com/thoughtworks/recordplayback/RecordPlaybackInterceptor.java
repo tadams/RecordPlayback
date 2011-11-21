@@ -1,5 +1,6 @@
 package com.thoughtworks.recordplayback;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 
@@ -45,14 +46,20 @@ public class RecordPlaybackInterceptor {
 
         String joinPointId = createMethodId(joinPoint);
         RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
+        StopWatch stopWatch = new StopWatch();
 
         try {
+            stopWatch.start();
             Object response = joinPoint.proceed();
-            recordHandler.recordAPI(joinPointId, request, response, null);
+            stopWatch.stop();
+
+            recordHandler.recordAPI(stopWatch, joinPointId, request, response, null);
             return response;
 
         } catch (Throwable thrown) {
-            recordHandler.recordAPI(joinPointId, request, null, thrown);
+            stopWatch.stop();
+
+            recordHandler.recordAPI(stopWatch, joinPointId, request, null, thrown);
             throw thrown;
         }
     }
@@ -72,6 +79,8 @@ public class RecordPlaybackInterceptor {
             throw recordedResponse.getException();
         }
 
+        simulateLatency(recordedResponse);
+
         return modifyResponse(joinPointId, recordedResponse, joinPoint.getArgs());
     }
 
@@ -87,6 +96,10 @@ public class RecordPlaybackInterceptor {
     public void setRunMode(RunMode newMode) {
         handleConfigChange(newMode);
         this.mode = newMode;
+    }
+
+    public RunMode getRunMode() {
+        return mode;
     }
 
     private void handleConfigChange(RunMode newMode) {
@@ -119,6 +132,17 @@ public class RecordPlaybackInterceptor {
             return responseModifier.modify(joinPointId, recordedResponse, originalArguments);
         }
         return recordedResponse.getResponse();
+    }
+
+
+    private void simulateLatency(RecordedResponse recordedResponse) {
+
+        if (recordedResponse.hasLatency()) {
+            try {
+                Thread.sleep(recordedResponse.getLatencyMilliseconds());
+            } catch (InterruptedException ignoreAndResumeExecution) {
+            }
+        }
     }
 
     public void setPlaybackHandler(PlaybackHandler playbackHandler) {

@@ -1,0 +1,7 @@
+TODO:
+
+[/] Add JMX support to toggle config Record <> Playback.
+
+[/] Add timing to each recorded response (future performance testing)
+
+[ ] Add option in  config to playback responses based on original latency
