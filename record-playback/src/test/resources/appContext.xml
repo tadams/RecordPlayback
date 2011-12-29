@@ -24,7 +24,7 @@
 
   <bean id="RunModeToggle"
         class="com.thoughtworks.recordplayback.config.RunModeToggle">
-    <constructor-arg ref="recordPlaybackInterceptor"/>
+    <property name="recordPlaybackInterceptor" ref="recordPlaybackInterceptor"/>
   </bean>
 
   <aop:config>

@@ -11,9 +11,7 @@ public class RecordPlaybackInterceptor {
 
     private RunMode mode = RunMode.OFF;
 
-    private RecordHandler   recordHandler;
-
-    private PlaybackHandler playbackHandler;
+    private Cache   cache = new Cache();
 
     private Map<String, RequestNormalizer> normalizerMap = new HashMap<String, RequestNormalizer>();
     private Map<String, ResponseModifier>  modifierMap   = new HashMap<String, ResponseModifier>();
@@ -44,8 +42,7 @@ public class RecordPlaybackInterceptor {
 
     private Object doRecord(ProceedingJoinPoint joinPoint) throws Throwable {
 
-        String joinPointId = createMethodId(joinPoint);
-        RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
+
         StopWatch stopWatch = new StopWatch();
 
         try {
@@ -53,15 +50,37 @@ public class RecordPlaybackInterceptor {
             Object response = joinPoint.proceed();
             stopWatch.stop();
 
-            recordHandler.recordAPI(stopWatch, joinPointId, request, response, null);
+            recordResponse(stopWatch, joinPoint, response);
             return response;
 
         } catch (Throwable thrown) {
             stopWatch.stop();
 
-            recordHandler.recordAPI(stopWatch, joinPointId, request, null, thrown);
+            recordException(stopWatch, joinPoint, thrown);
             throw thrown;
         }
+    }
+
+    private void recordException(StopWatch          stopWatch,
+                                 ProceedingJoinPoint joinPoint,
+                                 Throwable           thrown) {
+
+        String joinPointId = createMethodId(joinPoint);
+        RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
+        RecordedResponse recordedResponse = new RecordedResponse(thrown, stopWatch.getTime());
+
+        cache.save(request, recordedResponse);
+    }
+
+    private void recordResponse(StopWatch           stopWatch,
+                                ProceedingJoinPoint joinPoint,
+                                Object              response) {
+
+        String joinPointId = createMethodId(joinPoint);
+        RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
+        RecordedResponse recordedResponse = new RecordedResponse(response, stopWatch.getTime());
+
+        cache.save(request, recordedResponse);
     }
 
     //TODO: Handle condition when there is no RecordedResponse for Request
@@ -69,7 +88,7 @@ public class RecordPlaybackInterceptor {
         String joinPointId = createMethodId(joinPoint);
         RequestWrapper request = normalizeRequest(joinPointId, joinPoint.getArgs());
 
-        RecordedResponse recordedResponse = playbackHandler.getRecordedResponse(joinPointId, request);
+        RecordedResponse recordedResponse = cache.get(request);
 
         if (recordedResponse == null && mode.isDebug()) {
             return null;
@@ -79,6 +98,7 @@ public class RecordPlaybackInterceptor {
             throw recordedResponse.getException();
         }
 
+        //TODO: add toggle for simulate latency option
         simulateLatency(recordedResponse);
 
         return modifyResponse(joinPointId, recordedResponse, joinPoint.getArgs());
@@ -104,7 +124,8 @@ public class RecordPlaybackInterceptor {
 
     private void handleConfigChange(RunMode newMode) {
         if (mode == RunMode.RECORD && newMode != RunMode.RECORD) {
-            recordHandler.endRecord();
+            cache.saveAsFile();
+            cache.clear();
         }
     }
 
@@ -143,14 +164,6 @@ public class RecordPlaybackInterceptor {
             } catch (InterruptedException ignoreAndResumeExecution) {
             }
         }
-    }
-
-    public void setPlaybackHandler(PlaybackHandler playbackHandler) {
-        this.playbackHandler = playbackHandler;
-    }
-
-    public void setRecordHandler(RecordHandler recordHandler) {
-        this.recordHandler = recordHandler;
     }
 
     public void setRequestNormalizer(Map<String, RequestNormalizer> normalizerMap) {

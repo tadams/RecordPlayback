@@ -52,7 +52,7 @@ public class JmxTest {
 
     @Test
     public void shouldRunJmxServerWithRunModeToggle() throws Exception {
-        ObjectName objectName = new ObjectName("com.thoughtworks.recordplayback:name=RecordPlayBackRunMode");
+        ObjectName objectName = new ObjectName("com.thoughtworks.recordplayback:name=RunModeToggle");
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         MBeanInfo runModeInfo = mbs.getMBeanInfo(objectName);

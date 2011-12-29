@@ -6,12 +6,12 @@ import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-@ManagedResource(objectName = "com.thoughtworks.recordplayback:name=RecordPlayBackRunMode")
+@ManagedResource(objectName = "com.thoughtworks.recordplayback:name=RunModeToggle")
 public class RunModeToggle {
 
     private RecordPlaybackInterceptor recordPlaybackInterceptor;
 
-    public RunModeToggle(RecordPlaybackInterceptor recordPlaybackInterceptor) {
+    public void setRecordPlaybackInterceptor(RecordPlaybackInterceptor recordPlaybackInterceptor) {
         this.recordPlaybackInterceptor = recordPlaybackInterceptor;
     }
 

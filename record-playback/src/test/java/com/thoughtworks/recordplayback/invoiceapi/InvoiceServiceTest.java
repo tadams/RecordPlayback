@@ -24,14 +24,8 @@ public class InvoiceServiceTest {
     @Autowired
     private RecordPlaybackInterceptor interceptor;
 
-    private Cache cache = new Cache();
-
-    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls(cache);
-
     @Before
     public void given() {
-        interceptor.setRecordHandler(simpleRecordPlaybackImpls);
-        interceptor.setPlaybackHandler(simpleRecordPlaybackImpls);
 
         Map<String, RequestNormalizer> requestNormalizerMap = new HashMap<String, RequestNormalizer>();
         requestNormalizerMap.put("com.thoughtworks.recordplayback.invoiceapi.InvoiceService:buildInvoice",

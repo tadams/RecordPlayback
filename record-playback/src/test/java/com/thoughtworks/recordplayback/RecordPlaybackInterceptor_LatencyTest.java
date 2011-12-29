@@ -3,7 +3,6 @@ package com.thoughtworks.recordplayback;
 import com.thoughtworks.recordplayback.config.RunModeToggle;
 import com.thoughtworks.recordplayback.testservice.SimpleApi;
 import org.apache.commons.lang.time.StopWatch;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +25,6 @@ public class RecordPlaybackInterceptor_LatencyTest {
 
     @Autowired
     private RunModeToggle toggle;
-
-    private Cache cache = new Cache();
-
-    private SimpleRecordPlaybackImpls simpleRecordPlaybackImpls = new SimpleRecordPlaybackImpls(cache);
-
-    @Before
-    public void given() {
-        interceptor.setRecordHandler(simpleRecordPlaybackImpls);
-        interceptor.setPlaybackHandler(simpleRecordPlaybackImpls);
-    }
 
     @Test
     public void shouldRecordAndPlayback1API() {
