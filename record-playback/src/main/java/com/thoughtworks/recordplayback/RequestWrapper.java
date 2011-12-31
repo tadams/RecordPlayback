@@ -6,7 +6,7 @@ public class RequestWrapper implements Serializable {
 
     private Object[] requestArguments;
 
-    public RequestWrapper(Object[] requestArguments) {
+    public RequestWrapper(Object... requestArguments) {
         this.requestArguments = requestArguments;
     }
 

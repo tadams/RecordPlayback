@@ -586,6 +586,8 @@ public class DeepEquals
      * that would need further processing (reference fields).  This
      * makes field traversal on a class faster as it does not need to
      * continually process known fields like primitives.
+     *
+     * Record-Playback modification - skip all Date fields
      */
     public static Collection<Field> getDeepDeclaredFields(Class c)
     {
@@ -614,8 +616,8 @@ public class DeepEquals
                     }
 
                     int modifiers = field.getModifiers();
-                    if (!Modifier.isStatic(modifiers) &&
-                        !field.getName().startsWith("this$") &&
+                    if (shouldInclude(field.getName()) &&
+                        !Modifier.isStatic(modifiers) &&
                         !Modifier.isTransient(modifiers))
                     {   // speed up: do not count static fields, not go back up to enclosing object in nested case
                         fields.add(field);
@@ -633,6 +635,19 @@ public class DeepEquals
         }
         _reflectedFields.put(c, fields);
         return fields;
+    }
+
+    private static boolean shouldInclude(String fieldName) {
+        if (fieldName.startsWith("this$")) {
+            return false;
+        }
+        if (fieldName.endsWith("Date")) {
+            return false;
+        }
+        if (fieldName.endsWith("Time")) {
+            return false;
+        }
+        return true;
     }
 }
 
